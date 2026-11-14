@@ -21,6 +21,9 @@ Prints em `qa-evidence/` (gerados por `npm run e2e`, TV e Chromebook em 1366×76
 | Eliminado | Só assiste, sem item | `20-espectador-aluno` |
 | Impostor pego | Faixa vermelha pulsando e clarão na tela (TV e aluno) | `21-impostor-pego-tv`, `22-impostor-pego-aluno` |
 | Fim | Faixa gigante, confete, quem era o impostor, pódio subindo e ranking; "seu time ganhou/perdeu" no aluno | `23-vitoria-podio-tv`, `24-vitoria-aluno`, `25-derrota-impostor-aluno`, `27-impostor-venceu-tv`, `28-impostor-venceu-aluno` |
+| Atividade: escrever | Cartões de estudo flutuando, pergunta, contador de letras com barra, aviso de colar bloqueado e de texto copiado do cartão | `31-atividade-missao`, `32-atividade-bloqueios` |
+| Atividade: arrastar | Imagens à esquerda, funções à direita, tudo numa tela de 1366×768 (sem rolar arrastando); erro treme e conta; acerto fica verde com a imagem | `33-atividade-arrastar`, `34-atividade-arrastar-erro`, `35-atividade-arrastar-completo` |
+| Atividade: fim | Missão cumprida com dica; troféu, 8 selos e botão que abre "Entrar na sala" | `36-atividade-missao-cumprida`, `37-atividade-final`, `38-atividade-entrar-sala` |
 
 ## Critérios
 - TV em 1366×768 e 1920×1080 sem rolagem (fonte da TV escala com `vw`; lobby, escrita e votação crescem com poucos alunos).

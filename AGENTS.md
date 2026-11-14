@@ -10,6 +10,8 @@ Jogo de dedução em tempo real para turmas do técnico em Manutenção e Suport
 - A checagem "não diga o nome do item" é feita só no navegador de quem conhece o nome. Se o servidor recusasse, o impostor descobriria o item testando nomes.
 - **Banda do Render:** `state` (sala inteira) só quando muda a fase ou algo raro. Frase enviada e voto viram `mark` (poucos bytes). As falas na TV usam `showAt`/`pausedAt` e `showIndex()`; não mande mensagem por fala.
 - A tela do professor é a TV: nada secreto aparece nela.
+- **Rotas:** `main.tsx` escolhe a página pelo caminho (`/atividade` → `Atividade.tsx`, resto → `App`). O GitHub Pages não tem fallback de SPA, então o `vite.config.ts` copia o `index.html` para `dist/<rota>/`. Rota nova = entrar nas duas listas.
+- **/atividade:** missões em `shared/activity.ts`, alternando `write` (mínimo de 50 letras, sem colar) e `match` (arrastar com pointer events + clique). As missões juntas cobrem todos os itens do catálogo (há teste). Respostas só no `sessionStorage`; nada vai ao servidor.
 
 ## Regras de produto
 - Cada fala fica 10 s na TV (`PHRASE_MS`), depois do item grande (`INTRO_MS`). Votação de 60 s, com "pular voto".

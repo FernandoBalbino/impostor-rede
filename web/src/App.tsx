@@ -130,7 +130,10 @@ function Home({ notice, connected, onSession }: { notice: string; connected: boo
       <NetBackdrop />
       <header className="home-top">
         <Logo />
-        <span className={`pill ${connected ? 'pill-ok' : ''}`}>{connected ? '● servidor online' : '○ acordando o servidor…'}</span>
+        <span className="row">
+          <a className="pill pill-link" href={`${import.meta.env.BASE_URL}atividade`}>📚 Atividade de preparação</a>
+          <span className={`pill ${connected ? 'pill-ok' : ''}`}>{connected ? '● servidor online' : '○ acordando o servidor…'}</span>
+        </span>
       </header>
       <main className="home-main">
         <section className="hero">
