@@ -1,13 +1,15 @@
-// /atividade: trilha de preparação para o jogo. Estuda os cartões e responde com as próprias palavras.
+// /atividade: trilha de preparação para o jogo. Estuda os cartões, combina imagem e função e treina rodadas do impostor.
 // As respostas ficam só neste navegador (sessionStorage, para o próximo aluno do Chromebook começar do zero).
 import confetti from 'canvas-confetti';
 import { useEffect, useRef, useState, type CSSProperties, type PointerEvent, type SyntheticEvent, type TextareaHTMLAttributes } from 'react';
 import { CATEGORY_LABEL, ITEM_BY_ID, ITEMS } from '../../shared/catalog.ts';
-import { MIN_LETTERS, MISSIONS, checkAnswer, countLetters, type Mission } from '../../shared/activity.ts';
-import { ItemImg, Logo, NetBackdrop } from './ui.tsx';
+import { MIN_GUESS_LETTERS, MIN_LETTERS, MISSIONS, checkAnswer, checkGuess, countLetters, type Mission } from '../../shared/activity.ts';
+import { HELP_LABEL } from '../../shared/protocol.ts';
+import { Avatar, ItemImg, Logo, NetBackdrop, avatarColor, itemSrc } from './ui.tsx';
 
 const KEY = 'impostor-rede:atividade';
 const JOIN_URL = `${import.meta.env.BASE_URL}?sala=`; // abre direto "Entrar na sala" (código + nome)
+const KIND_ICON: Record<Mission['kind'], string> = { write: '✍️', match: '🧩', impostor: '🕵️' };
 
 interface Progress { answers: string[]; step: number } // step = missão atual; MISSIONS.length = trilha completa
 
@@ -50,8 +52,9 @@ export function Atividade() {
   }, [answers, step]);
   useEffect(() => {
     setWarn('');
-    // Missão de arrastar: imagens e funções inteiras na tela (arrastar e rolar ao mesmo tempo é ruim no touchpad).
-    if (!cleared && MISSIONS[step]?.kind === 'match') document.querySelector('.m-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Arrastar: imagens e funções inteiras na tela (arrastar e rolar ao mesmo tempo é ruim no touchpad).
+    // Rodada de treino: o item e as frases logo no topo.
+    if (!cleared && step < MISSIONS.length && MISSIONS[step].kind !== 'write') document.querySelector('.m-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     else scrollTo({ top: 0, behavior: 'smooth' }); // no Chrome novo o scrollTo devolve uma Promise: não pode ser o retorno do efeito
   }, [step, cleared]);
 
@@ -79,8 +82,9 @@ export function Atividade() {
           <p className="eyebrow">Antes do jogo</p>
           <h1>Trilha do técnico de redes</h1>
           <p>
-            No Impostor da Rede você precisa saber para que serve cada aparelho. Nas missões ✍️, leia os cartões e responda com as suas palavras
+            No Impostor da Rede você precisa saber para que serve cada aparelho. Na missão ✍️, leia os cartões e responda com as suas palavras
             (pelo menos {MIN_LETTERS} letras; colar está desativado). Nas missões 🧩, arraste cada imagem até a função certa.
+            Nas rodadas de treino 🕵️, leia as frases e escreva quem é o impostor.
           </p>
         </div>
 
@@ -92,7 +96,7 @@ export function Atividade() {
               return (
                 <li key={k} className={`node ${state}`} aria-current={state === 'now' ? 'step' : undefined}>
                   <span className="node-dot" aria-hidden="true">{state === 'done' ? '✓' : state === 'locked' ? '🔒' : m.emoji}</span>
-                  <small>Missão {k + 1} {m.kind === 'match' ? '🧩' : '✍️'}</small>
+                  <small>Missão {k + 1} {KIND_ICON[m.kind]}</small>
                   <b>{m.title}</b>
                   <span className="sr-only">{state === 'done' ? 'cumprida' : state === 'now' ? 'atual' : 'bloqueada'}</span>
                 </li>
@@ -121,6 +125,8 @@ export function Atividade() {
             </div>
             {mission.kind === 'match' ? (
               <Match key={step} mission={mission} last={last} onDone={(errors) => complete(`combinou tudo com ${errors} erro(s)`)} />
+            ) : mission.kind === 'impostor' ? (
+              <Training key={step} mission={mission} last={last} onDone={complete} />
             ) : (<>
             <p className="study-label">📖 Estude os cartões</p>
             <ul className="study">
@@ -276,6 +282,160 @@ function Match({ mission, last, onDone }: { mission: Mission; last: boolean; onD
       </div>
     </>
   );
+}
+
+// Rodada de treino: o aluno é da turma, vê o item, lê 3 frases e escreve o nome do impostor (com o motivo).
+function Training({ mission, last, onDone }: { mission: Extract<Mission, { kind: 'impostor' }>; last: boolean; onDone: (answer: string) => void }) {
+  const { round } = mission;
+  const item = ITEM_BY_ID[round.itemId];
+  const impostor = round.suspects[round.impostor];
+  const [text, setText] = useState('');
+  const [warn, setWarn] = useState('');
+  const [miss, setMiss] = useState<number | null>(null); // última acusação errada: mostra por que é inocente
+  const [cleared, setCleared] = useState<number[]>([]);
+  const [errors, setErrors] = useState(0);
+  const [caught, setCaught] = useState(false);
+  const reveal = useRef<HTMLDivElement>(null);
+  const { named, problem, ready, right } = checkGuess(text, round);
+  const letters = countLetters(text);
+  const names = round.suspects.map((s) => s.name);
+
+  useEffect(() => {
+    if (caught) reveal.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [caught]);
+
+  const accuse = () => {
+    if (!ready) return;
+    if (right) return setCaught(true);
+    setErrors((n) => n + 1);
+    setMiss(named[0]);
+    setCleared((c) => (c.includes(named[0]) ? c : [...c, named[0]]));
+  };
+
+  return (
+    <>
+      <p className="m-q">🕵️ {mission.question}</p>
+      <div className="round">
+        <section className="r-card" aria-label="Seu cartão">
+          <p className="r-role">✅ Você é da turma</p>
+          <p className="eyebrow">Item da rodada · {CATEGORY_LABEL[item.category]}</p>
+          <ItemImg id={item.id} size={150} />
+          <b className="r-name">{item.name}</b>
+          <p>{item.summary}</p>
+        </section>
+        <section className="r-tv" aria-label="Frases da rodada">
+          <p className="study-label">📺 As frases que apareceram na TV</p>
+          <ol className="r-list">
+            {round.suspects.map((s, k) => {
+              const state = caught ? (k === round.impostor ? 'caught' : 'innocent') : cleared.includes(k) ? 'innocent' : '';
+              const accused = !caught && named.length === 1 && named[0] === k;
+              return (
+                <li
+                  key={s.name}
+                  className={`r-sus ${state} ${accused ? 'accused' : ''} ${miss === k ? 'miss' : ''}`}
+                  style={{ '--c': avatarColor(s.avatar), '--k': k } as CSSProperties}
+                >
+                  <Avatar n={s.avatar} size={60} />
+                  <div className="r-say">
+                    <b>{s.name}</b>
+                    <p className="r-bubble">{s.phrase}</p>
+                  </div>
+                  {state === 'caught' && <span className="r-tag imp">Impostor</span>}
+                  {state === 'innocent' && <span className="r-tag ok">Inocente ✓</span>}
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      </div>
+
+      {caught ? (
+        <>
+          <div className="r-reveal" ref={reveal} role="status">
+            <h3>🎯 Acertou! {impostor.name} era o impostor.</h3>
+            <div className="r-reveal-body">
+              <div className="r-help">
+                <small>Ajuda que {impostor.name} recebeu: {HELP_LABEL[round.help]}</small>
+                {round.help === 'dica' && <p className="r-clue">Tipo: {CATEGORY_LABEL[item.category]} + uma dica, sem a imagem e sem o nome</p>}
+                {round.help === 'pixel' && round.decoy && (
+                  <div className="duo">
+                    <figure><Pixelated id={item.id} /><figcaption>O que viu</figcaption></figure>
+                    <figure className="guess"><ItemImg id={round.decoy} thumb size={110} /><figcaption>Achou que era: {ITEM_BY_ID[round.decoy].name}</figcaption></figure>
+                  </div>
+                )}
+                {round.help === 'dupla' && round.decoy && (
+                  <div className="duo">
+                    {[round.itemId, round.decoy].map((id) => (
+                      <figure key={id} className={id === round.decoy ? 'guess' : ''}>
+                        <ItemImg id={id} thumb size={110} />
+                        <figcaption>{ITEM_BY_ID[id].name}{id === round.decoy ? ' (escolheu)' : ''}</figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <p>{round.reveal}</p>
+            </div>
+          </div>
+          <div className="m-foot r-foot">
+            <small className="m-count ok">✓ Impostor encontrado{errors > 0 && ` · ${errors} ${errors === 1 ? 'acusação errada' : 'acusações erradas'}`}</small>
+            <button className="btn btn-primary btn-xl" autoFocus onClick={() => onDone(`${text} (${errors} erro(s))`)}>
+              {last ? 'Concluir a trilha 🏁' : 'Concluir missão →'}
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <label className="m-q" htmlFor="acusacao">
+            🗳️ Quem é o impostor? Escreva o nome e por que você desconfia. Cite só um nome (pelo menos {MIN_GUESS_LETTERS} letras).
+          </label>
+          <TypedTextarea
+            id="acusacao"
+            value={text}
+            maxLength={300}
+            rows={3}
+            spellCheck
+            onChange={(e) => (setWarn(''), setText(e.target.value))}
+            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), accuse())}
+            onBlocked={() => setWarn('Colar está desativado. Escreva com as suas palavras 🙂')}
+          />
+          {miss !== null && (
+            <p className="r-miss" role="alert">
+              ❌ <b>{round.suspects[miss].name} não é o impostor.</b> {round.suspects[miss].note} Tente de novo.
+            </p>
+          )}
+          {(warn || problem) && <p className="err" role="alert">{warn || problem}</p>}
+          <p className={`r-vote ${named.length === 1 ? 'on' : named.length > 1 ? 'warn' : ''}`} aria-live="polite">
+            {named.length === 1 ? (
+              <>🗳️ Você está acusando: <Avatar n={round.suspects[named[0]].avatar} size={28} /> <b>{round.suspects[named[0]].name}</b></>
+            ) : named.length > 1 ? (
+              `⚠️ Você citou ${named.map((k) => names[k]).join(' e ')}. Acuse só um jogador.`
+            ) : (
+              `🗳️ Escreva o nome de quem você acusa: ${names.slice(0, -1).join(', ')} ou ${names.at(-1)}.`
+            )}
+          </p>
+          <div className="m-foot">
+            <span className="m-meter" aria-hidden="true"><i style={{ transform: `scaleX(${Math.min(1, letters / MIN_GUESS_LETTERS)})` }} /></span>
+            <small className={`m-count ${ready ? 'ok' : ''}`}>
+              {ready ? '✓ Pronto para acusar' : letters >= MIN_GUESS_LETTERS ? `${letters} letras ✓` : `${letters}/${MIN_GUESS_LETTERS} letras no mínimo`}
+            </small>
+            <button className="btn btn-primary btn-xl" disabled={!ready} onClick={accuse}>Acusar 🗳️</button>
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
+// Imagem 10×10 feita na hora, a partir da miniatura pública (o pixels.json do jogo fica só no servidor).
+function Pixelated({ id }: { id: string }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => ref.current?.getContext('2d')?.drawImage(img, 0, 0, 10, 10);
+    img.src = itemSrc(id, true);
+  }, [id]);
+  return <canvas ref={ref} className="pixel-img" width={10} height={10} role="img" aria-label="Imagem pixelada do item" />;
 }
 
 function Finish() {

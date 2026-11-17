@@ -10,10 +10,12 @@ Componentes: **Redes de Computadores** (equipamentos: roteador, switch, modem; W
 
 ## Antes do jogo: /atividade
 
-Trilha de 8 missões para a turma chegar ao jogo sabendo a função de cada item, mesmo quem não sabe nada. Juntas, as missões passam pelos 43 itens.
+Trilha de 10 missões para a turma chegar ao jogo sabendo a função de cada item e como uma rodada funciona, mesmo quem não sabe nada. Juntas, as missões passam pelos 43 itens.
 
-- **4 missões de escrever (✍️):** cartões de estudo (imagem, nome e para que serve) e uma pergunta para responder com as próprias palavras. Mínimo de **50 letras** (só letras contam). Colar, arrastar texto e copiar ficam bloqueados. A resposta também não passa se repetir 7 palavras seguidas do cartão ou se tiver menos de 6 palavras diferentes.
-- **4 missões de arrastar (🧩):** 5 ou 6 imagens de um lado e as funções do outro. O aluno arrasta cada imagem até a função certa (mouse, touchpad ou toque), ou clica na imagem e depois na função. Errou: a função treme e a imagem volta.
+- **1 missão de escrever (✍️):** cartões de estudo (imagem, nome e para que serve) e uma pergunta para responder com as próprias palavras. Mínimo de **50 letras** (só letras contam). Colar, arrastar texto e copiar ficam bloqueados. A resposta também não passa se repetir 7 palavras seguidas do cartão ou se tiver menos de 6 palavras diferentes.
+- **6 missões de arrastar (🧩):** 5 ou 6 imagens de um lado e as funções do outro. O aluno arrasta cada imagem até a função certa (mouse, touchpad ou toque), ou clica na imagem e depois na função. Errou: a função treme e a imagem volta.
+- **3 rodadas de treino (🕵️):** simulam uma rodada do jogo. O aluno é da turma: vê o item (imagem, nome e para que serve) e as frases de 3 robôs na "TV". Para acusar, escreve o nome do impostor e o motivo (mínimo de **25 letras**, um nome só, sem colar). Acusou um inocente: aparece por que a frase dele combina com o item, e o aluno tenta de novo. Acertou: o robô fica cinza e aparece a ajuda que o impostor recebeu. Cada rodada mostra uma ajuda do jogo: dica escrita (Câmera IP, impostor com frase vaga), dois itens (Ping × Velocidade) e imagem pixelada (SSD × HD).
+- Ordem: ✍️ 🧩 🧩 🕵️ 🧩 🧩 🕵️ 🧩 🧩 🕵️.
 - Cada missão cumprida mostra uma dica. No fim, o botão **Entrar na sala do jogo** abre direto o formulário de código e nome.
 - As respostas ficam só no navegador do aluno (`sessionStorage`), sem usar o Render. Fechar a aba recomeça a trilha, para o próximo aluno do Chromebook.
 
@@ -53,9 +55,9 @@ npm install
 npm run dev:server   # Socket.IO em http://localhost:3000
 npm run dev:web      # Vite em http://localhost:5173/impostor-rede/
 npm run check        # TypeScript
-npm test             # regras do jogo e da atividade (22 testes)
+npm test             # regras do jogo e da atividade (24 testes)
 npm run e2e          # partida completa no Chrome com 5 alunos; prints em qa-evidence/
-npm run e2e:atividade  # trilha /atividade no Chrome (colar bloqueado, arrastar, botão da sala)
+npm run e2e:atividade  # trilha /atividade no Chrome (colar bloqueado, arrastar, rodadas de treino, botão da sala)
 ```
 
 - `shared/catalog.ts`: os 43 itens (nome, tipo e para que serve). `shared/protocol.ts`: tempos, tipos e eventos. `shared/activity.ts`: as missões da `/atividade` e as regras das respostas.

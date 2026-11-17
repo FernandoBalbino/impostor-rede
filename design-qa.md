@@ -23,7 +23,8 @@ Prints em `qa-evidence/` (gerados por `npm run e2e`, TV e Chromebook em 1366×76
 | Fim | Faixa gigante, confete, quem era o impostor, pódio subindo e ranking; "seu time ganhou/perdeu" no aluno | `23-vitoria-podio-tv`, `24-vitoria-aluno`, `25-derrota-impostor-aluno`, `27-impostor-venceu-tv`, `28-impostor-venceu-aluno` |
 | Atividade: escrever | Cartões de estudo flutuando, pergunta, contador de letras com barra, aviso de colar bloqueado e de texto copiado do cartão | `31-atividade-missao`, `32-atividade-bloqueios` |
 | Atividade: arrastar | Imagens à esquerda, funções à direita, tudo numa tela de 1366×768 (sem rolar arrastando); erro treme e conta; acerto fica verde com a imagem | `33-atividade-arrastar`, `34-atividade-arrastar-erro`, `35-atividade-arrastar-completo` |
-| Atividade: fim | Missão cumprida com dica; troféu, 8 selos e botão que abre "Entrar na sala" | `36-atividade-missao-cumprida`, `37-atividade-final`, `38-atividade-entrar-sala` |
+| Atividade: rodada de treino | Cartão do item (você é da turma) e 3 robôs com as frases em balões; o nome escrito marca o acusado em vermelho; dois nomes travam o botão; acusação errada explica a frase e marca "inocente"; acerto deixa o robô cinza e mostra a ajuda do impostor (dica, dois itens ou imagem pixelada) | `39-atividade-rodada-treino`, `40-atividade-rodada-erro`, `41-atividade-rodada-dica`, `42-atividade-rodada-dupla`, `43-atividade-rodada-pixel` |
+| Atividade: fim | Missão cumprida com dica; troféu, 10 selos numa linha e botão que abre "Entrar na sala" | `36-atividade-missao-cumprida`, `37-atividade-final`, `38-atividade-entrar-sala` |
 
 ## Critérios
 - TV em 1366×768 e 1920×1080 sem rolagem (fonte da TV escala com `vw`; lobby, escrita e votação crescem com poucos alunos).

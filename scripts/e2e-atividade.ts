@@ -1,4 +1,4 @@
-// Trilha /atividade no Chrome: colar bloqueado, mínimo de 50 letras, missões de arrastar e o botão para entrar na sala.
+// Trilha /atividade no Chrome: colar bloqueado, mínimo de 50 letras, missões de arrastar, rodadas de treino e o botão para entrar na sala.
 // Uso: node scripts/e2e-atividade.ts   (Vite local; ou E2E_URL=https://.../impostor-rede/)
 import { chromium, type Locator } from 'playwright';
 import { mkdirSync } from 'node:fs';
@@ -8,13 +8,9 @@ const URL = process.env.E2E_URL ?? 'http://localhost:5173/impostor-rede/';
 const OUT = 'qa-evidence';
 mkdirSync(OUT, { recursive: true });
 
-// Respostas das missões de escrever, na ordem em que aparecem.
-const ANSWERS = [
-  'O modem recebe a internet da operadora que vem pela rua e o roteador espalha o sinal para o celular pelo Wi-Fi.',
-  'O IP é como o endereço da minha casa para o carteiro achar, e o ping mostra se o jogo vai ficar com atraso.',
-  'O firewall bloqueia o que é perigoso e a senha deixa só quem conhece entrar, a nuvem guarda meus arquivos na internet.',
-  'O processador pensa e faz as contas, a RAM guarda o que está aberto e o SSD guarda os arquivos mesmo desligado.',
-];
+// Resposta da missão de escrever.
+const ANSWER = 'O modem recebe a internet da operadora que vem pela rua e o roteador espalha o sinal para o celular pelo Wi-Fi.';
+const FIRST_ROUND = MISSIONS.findIndex((m) => m.kind === 'impostor');
 
 const browser = await chromium.launch({ channel: process.env.PW_CHANNEL ?? 'chrome' });
 const errors: string[] = [];
@@ -66,13 +62,41 @@ try {
   await box.pressSequentially('O roteador cria o Wi-Fi.', { delay: 2 });
   if (await page.getByRole('button', { name: /Enviar resposta/ }).isEnabled()) throw new Error('aceitou menos de 50 letras');
 
-  let written = 0;
   for (const [k, m] of MISSIONS.entries()) {
     const last = k === MISSIONS.length - 1;
     if (m.kind === 'write') {
       await box.fill('');
-      await box.pressSequentially(ANSWERS[written++], { delay: 1 });
+      await box.pressSequentially(ANSWER, { delay: 1 });
       await page.getByRole('button', { name: last ? /concluir a trilha/ : /Enviar resposta/ }).click();
+    } else if (m.kind === 'impostor') {
+      const r = m.round;
+      const guess = page.locator('#acusacao');
+      const accuse = page.getByRole('button', { name: /Acusar/ });
+      const guilty = r.suspects[r.impostor];
+      await guess.waitFor();
+      await page.waitForTimeout(1200); // rolagem e frases entrando
+      if (k === FIRST_ROUND) {
+        await shot('39-atividade-rodada-treino');
+        const innocent = r.suspects.find((_, j) => j !== r.impostor)!;
+        // Dois nomes: não dá para acusar.
+        await guess.pressSequentially(`Acho que é ${innocent.name} ou ${guilty.name}, as duas frases estão estranhas.`, { delay: 1 });
+        await page.locator('.r-vote.warn').waitFor();
+        if (await accuse.isEnabled()) throw new Error('aceitou acusar dois jogadores');
+        // Acusação errada: explica por que a frase combina com o item e marca o inocente.
+        await guess.fill('');
+        await guess.pressSequentially(`${innocent.name} é o impostor, a frase não combina com o item.`, { delay: 1 });
+        await page.locator('.r-sus.accused').waitFor();
+        await accuse.click();
+        await page.locator('.r-miss', { hasText: `${innocent.name} não é o impostor` }).waitFor();
+        await page.locator('.r-sus.innocent').waitFor();
+        await shot('40-atividade-rodada-erro');
+        await guess.fill('');
+      }
+      await guess.pressSequentially(`${guilty.name} é o impostor, a frase não combina com o item.`, { delay: 1 });
+      await accuse.click();
+      await page.locator('.r-reveal').waitFor();
+      await shot(`4${['dica', 'dupla', 'pixel'].indexOf(r.help) + 1}-atividade-rodada-${r.help}`);
+      await page.getByRole('button', { name: last ? /Concluir a trilha/ : /Concluir missão/ }).click();
     } else {
       await page.locator('.match').waitFor();
       await page.waitForTimeout(700); // rolagem suave até o cartão
